@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Responses Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f6f8fb;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      margin-top: 0;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .controls, .metrics, .grid, .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      margin-bottom: 16px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    label {
+      font-size: 12px;
+      color: #4b5563;
+      display: block;
+      margin-bottom: 6px;
+    }
+    select, input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+    .metric {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .metric .k {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .metric .v {
+      margin-top: 4px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .card h3 {
+      margin: 4px 0 12px 0;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      padding: 8px;
+      vertical-align: top;
+    }
+    th {
+      background: #f9fafb;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .table-scroll {
+      max-height: 360px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Responses Dashboard</h1>
+    <p class="subtitle">Interactive HTML dashboard for `demo_responses.csv`</p>
+
+    <div class="controls">
+      <div>
+        <label for="roleFilter">Role</label>
+        <select id="roleFilter">
+          <option value="All">All roles</option>
+        </select>
+      </div>
+      <div>
+        <label for="searchInput">Find text in response</label>
+        <input id="searchInput" type="text" placeholder="e.g. research, onboarding, accessibility" />
+      </div>
+      <div>
+        <label for="minWords">Minimum words</label>
+        <input id="minWords" type="number" min="0" value="0" />
+      </div>
+      <div>
+        <label for="maxWords">Maximum words</label>
+        <input id="maxWords" type="number" min="0" value="9999" />
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="k">Responses</div><div class="v" id="mResponses">0</div></div>
+      <div class="metric"><div class="k">Average Words</div><div class="v" id="mAvgWords">0</div></div>
+      <div class="metric"><div class="k">Shortest</div><div class="v" id="mShortest">0</div></div>
+      <div class="metric"><div class="k">Longest</div><div class="v" id="mLongest">0</div></div>
+      <div class="metric"><div class="k">Unique Roles</div><div class="v" id="mRoles">0</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Role Distribution</h3>
+        <canvas id="roleChart"></canvas>
+      </div>
+      <div class="card">
+        <h3>Top Terms</h3>
+        <canvas id="termChart"></canvas>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <h3>Filtered Responses</h3>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Participant</th>
+              <th>Role</th>
+              <th>Words</th>
+              <th>Response</th>
+            </tr>
+          </thead>
+          <tbody id="responseRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const data = [
+      { participant_id: "P01", role: "UX Researcher", response: "I usually start by reviewing whatever documentation exists, but honestly most of the time there isn't much. I end up doing a lot of stakeholder interviews just to figure out what the product is actually supposed to do." },
+      { participant_id: "P02", role: "UX Designer", response: "The hardest part is getting engineers to understand why we need more than two weeks for discovery. They always want to jump straight to wireframes. I've started framing research as risk reduction and that helps a little." },
+      { participant_id: "P03", role: "Product Manager", response: "We run two-week sprints and research keeps getting squeezed into the first three days. By the time we have findings, the design decisions are already made. I don't know how to fix that." },
+      { participant_id: "P04", role: "UX Researcher", response: "Recruiting is always the bottleneck. We spend more time finding participants than actually running sessions. I wish we had a panel we could pull from instead of starting from scratch every time." },
+      { participant_id: "P05", role: "Content Strategist", response: "Nobody invites me into the research phase. I find out what users said in the readout and by then the IA is already locked. The language problems surface in usability testing three months later." },
+      { participant_id: "P06", role: "UX Designer", response: "I've started doing five-minute hallway tests with anyone I can find. It's not rigorous but it's faster than waiting for a formal study to get scheduled and approved." },
+      { participant_id: "P07", role: "UX Researcher", response: "The synthesis step is where we lose people. Everyone attends the sessions but nobody wants to sit through two days of affinity mapping. I've tried doing it async with Miro but participation drops off." },
+      { participant_id: "P08", role: "Product Manager", response: "My biggest frustration is that research findings don't translate into decisions. We get a deck with quotes and themes and then everyone nods and goes back to doing what they planned to do anyway." },
+      { participant_id: "P09", role: "UX Designer", response: "I find it really hard to push back when someone senior says they already know what users want. Even when I have data that contradicts them." },
+      { participant_id: "P10", role: "UX Researcher", response: "Remote sessions have actually improved our geographic diversity. We used to only talk to people in Seattle. Now we regularly include participants from smaller cities and that's changed some of our assumptions." },
+      { participant_id: "P11", role: "Content Strategist", response: "I've been trying to introduce plain language principles but the legal team always pushes back. They want specific wording that users consistently misread in testing. It's a constant negotiation." },
+      { participant_id: "P12", role: "Product Manager", response: "We don't have a dedicated researcher on my team so I end up doing interviews myself. I'm not sure I'm doing them well but it's better than not doing them at all." },
+      { participant_id: "P13", role: "UX Designer", response: "The gap between what users say they do and what they actually do is real. I had a participant tell me they always read the confirmation email and then in the diary study we ran they never opened a single one." },
+      { participant_id: "P14", role: "UX Researcher", response: "I'm spending more time writing reports that nobody reads than actually doing research. I've been experimenting with shorter formats, like a one-page brief, and that gets more engagement." },
+      { participant_id: "P15", role: "Product Manager", response: "Our design system has made things more consistent but it's also made some teams less willing to question patterns that don't actually work for their users. Convention becomes a crutch." },
+      { participant_id: "P16", role: "UX Designer", response: "I've started including a confidence rating in my recommendations, like this is high confidence from multiple sources versus this is directional from a single session. It's changed how people receive the findings." },
+      { participant_id: "P17", role: "UX Researcher", response: "Accessibility keeps getting treated as a compliance checklist instead of a design constraint. I've had the most success when I can get an assistive technology user into a session early because seeing it is harder to argue with than reading about it." },
+      { participant_id: "P18", role: "Content Strategist", response: "Error messages are the last thing anyone thinks about and the first thing users notice when something goes wrong. I've been trying to get them into scope earlier but they always end up being a handoff item." },
+      { participant_id: "P19", role: "UX Designer", response: "I struggle with knowing when I have enough data. There's always pressure to do one more round but at some point you're validating what you already know." },
+      { participant_id: "P20", role: "Product Manager", response: "The most useful thing research has done for us is help us stop building things. We killed two features last quarter based on findings and that felt like a win even though it's hard to show in a metric." },
+      { participant_id: "P21", role: "UX Researcher", response: "We've been using AI to help with transcript analysis and it speeds things up but I always do a pass myself because it flattens nuance. It's good at finding patterns and bad at knowing which ones matter." },
+      { participant_id: "P22", role: "UX Designer", response: "Onboarding is where our product falls apart and everyone knows it but there's no owner. Product thinks it's design, design thinks it's content, content thinks it's engineering. The user just bounces." },
+      { participant_id: "P23", role: "Content Strategist", response: "I've been pushing for a terminology audit across the product for two years. Different parts of the app use different words for the same thing and users notice even if they can't articulate why." },
+      { participant_id: "P24", role: "UX Researcher", response: "The best sessions I run are the ones where I say almost nothing. The worst are when I'm trying to cover too many topics and I end up steering instead of listening." },
+      { participant_id: "P25", role: "Product Manager", response: "We did a diary study last year and the data was incredible but we've never had the budget or time to do another one. I think longitudinal research is undersold in product teams." }
+    ];
+
+    const stopWords = new Set(["the","and","to","of","a","in","is","it","for","that","we","i","on","with","as","have","be","but","they","this","are","my","at","so","do","by","from","or","not","our","was","had","has","their","all","when","into","than","them","me","you","your","its","it's","ive","i've","dont","don't"]);
+
+    data.forEach(d => d.word_count = d.response.trim().split(/\s+/).length);
+
+    const roleFilter = document.getElementById("roleFilter");
+    const searchInput = document.getElementById("searchInput");
+    const minWords = document.getElementById("minWords");
+    const maxWords = document.getElementById("maxWords");
+    const rowsEl = document.getElementById("responseRows");
+
+    const roles = [...new Set(data.map(d => d.role))].sort();
+    roles.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r;
+      opt.textContent = r;
+      roleFilter.appendChild(opt);
+    });
+
+    const roleChart = new Chart(document.getElementById("roleChart"), {
+      type: "bar",
+      data: { labels: [], datasets: [{ label: "Responses", data: [], backgroundColor: "#4f46e5" }] },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+
+    const termChart = new Chart(document.getElementById("termChart"), {
+      type: "bar",
+      data: { labels: [], datasets: [{ label: "Term Frequency", data: [], backgroundColor: "#0891b2" }] },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+
+    function getFilteredRows() {
+      const role = roleFilter.value;
+      const search = searchInput.value.trim().toLowerCase();
+      const minW = Number(minWords.value || 0);
+      const maxW = Number(maxWords.value || 9999);
+
+      return data.filter(d => {
+        const roleOk = role === "All" || d.role === role;
+        const searchOk = !search || d.response.toLowerCase().includes(search);
+        const wordsOk = d.word_count >= minW && d.word_count <= maxW;
+        return roleOk && searchOk && wordsOk;
+      });
+    }
+
+    function computeTopTerms(rows, topN = 12) {
+      const counts = new Map();
+      rows.forEach(r => {
+        const words = (r.response.toLowerCase().match(/\b[a-z']+\b/g) || []);
+        words.forEach(w => {
+          if (w.length < 3 || stopWords.has(w)) return;
+          counts.set(w, (counts.get(w) || 0) + 1);
+        });
+      });
+      return [...counts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topN);
+    }
+
+    function renderTable(rows) {
+      rowsEl.innerHTML = "";
+      rows.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.participant_id}</td>
+          <td>${r.role}</td>
+          <td>${r.word_count}</td>
+          <td>${r.response}</td>
+        `;
+        rowsEl.appendChild(tr);
+      });
+      if (rows.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="4">No rows match current filters.</td>`;
+        rowsEl.appendChild(tr);
+      }
+    }
+
+    function renderMetrics(rows) {
+      const words = rows.map(r => r.word_count);
+      const avg = words.length ? (words.reduce((a, b) => a + b, 0) / words.length).toFixed(1) : "0.0";
+      const min = words.length ? Math.min(...words) : 0;
+      const max = words.length ? Math.max(...words) : 0;
+      const uniqRoles = new Set(rows.map(r => r.role)).size;
+
+      document.getElementById("mResponses").textContent = rows.length;
+      document.getElementById("mAvgWords").textContent = avg;
+      document.getElementById("mShortest").textContent = min;
+      document.getElementById("mLongest").textContent = max;
+      document.getElementById("mRoles").textContent = uniqRoles;
+    }
+
+    function renderRoleChart(rows) {
+      const counts = {};
+      rows.forEach(r => { counts[r.role] = (counts[r.role] || 0) + 1; });
+      const labels = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+      roleChart.data.labels = labels;
+      roleChart.data.datasets[0].data = labels.map(l => counts[l]);
+      roleChart.update();
+    }
+
+    function renderTermChart(rows) {
+      const terms = computeTopTerms(rows);
+      termChart.data.labels = terms.map(([t]) => t);
+      termChart.data.datasets[0].data = terms.map(([, c]) => c);
+      termChart.update();
+    }
+
+    function updateDashboard() {
+      const rows = getFilteredRows();
+      renderMetrics(rows);
+      renderRoleChart(rows);
+      renderTermChart(rows);
+      renderTable(rows);
+    }
+
+    [roleFilter, searchInput, minWords, maxWords].forEach(el =>
+      el.addEventListener("input", updateDashboard)
+    );
+
+    updateDashboard();
+  </script>
+</body>
+</html>
