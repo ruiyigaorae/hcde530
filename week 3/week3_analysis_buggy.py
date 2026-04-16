@@ -28,15 +28,18 @@ for role, count in sorted(role_counts.items()):
     print(f"  {role}: {count}")
 
 # Calculate the average years of experience
-total_experience = 0
-valid_count = 0
-for row in rows:
-    try:
-        total_experience += int(row["experience_years"])
-        valid_count += 1
-    except ValueError:
-        pass
-avg_experience = total_experience / valid_count
+def calculate_average(rows, field):
+    total = 0
+    count = 0
+    for row in rows:
+        try:
+            total += int(row[field])
+            count += 1
+        except ValueError:
+            pass
+    return total / count
+
+avg_experience = calculate_average(rows, "experience_years")
 print(f"\nAverage years of experience: {avg_experience:.1f}")
 
 # Find the top 5 highest satisfaction scores
