@@ -13,6 +13,7 @@ with open(filename, newline="", encoding="utf-8") as f:
 # Normalize role names so "ux researcher" and "UX Researcher" are counted together
 role_counts = {}
 
+# Count responses by role
 for row in rows:
     role = row["role"].strip().title()
     if not role:
@@ -47,7 +48,7 @@ for row in rows:
 scored_rows.sort(key=lambda x: x[1], reverse=True)
 top5 = scored_rows[:5]
 
-
+# Find the top 5 highest satisfaction scores
 print("\nTop 5 satisfaction scores:")
 for name, score in top5:
     print(f"  {name}: {score}")
