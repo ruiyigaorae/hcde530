@@ -15,6 +15,8 @@ role_counts = {}
 
 for row in rows:
     role = row["role"].strip().title()
+    if not role:
+        continue
     if role in role_counts:
         role_counts[role] += 1
     else:
@@ -42,7 +44,7 @@ for row in rows:
     if row["satisfaction_score"].strip():
         scored_rows.append((row["participant_name"], int(row["satisfaction_score"])))
 
-scored_rows.sort(key=lambda x: x[1])
+scored_rows.sort(key=lambda x: x[1], reverse=True)
 top5 = scored_rows[:5]
 
 
