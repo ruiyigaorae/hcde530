@@ -55,3 +55,20 @@ top5 = scored_rows[:5]
 print("\nTop 5 satisfaction scores:")
 for name, score in top5:
     print(f"  {name}: {score}")
+
+# Normalize text columns to consistent capitalization
+columns_to_clean = ["role", "department", "primary_tool"]
+
+for row in rows:
+    for col in columns_to_clean:
+        if col in row and row[col]:
+            row[col] = row[col].strip().title()
+
+# Write the cleaned data to a new CSV file
+output_filename = "week3_survey_cleaned.csv"
+with open(output_filename, "w", newline="", encoding="utf-8") as f:
+    writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+    writer.writeheader()
+    writer.writerows(rows)
+
+print(f"\nCleaned data saved to {output_filename}")
