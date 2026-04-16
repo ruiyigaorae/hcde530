@@ -1,1 +1,11 @@
-This　week I learned how to use Cursor AI to help writing script for data analysis. Also, I learned to used Cursor AI agent help explaining the code for me, which is a extremely useful function. I also tried using Claude AI to do similar tasks and compare its outcome with Cursor AI, determining which software I should use for different tasks. 
+## Competency Claim
+
+**Domain: Python scripting for data analysis**
+I can use AI-assisted tools to generate and understand Python scripts that 
+read CSV files and analyze survey data. Evidence: word_count.py reads 
+demo_responses.csv and counts words in each response without errors.
+
+**Domain: Using AI tools effectively**
+I can compare outputs from different AI tools (Cursor and Claude) to evaluate 
+which is better suited for a given task. Evidence: I used both tools to generate 
+analysis scripts and assessed their differences in code quality and explanation.
