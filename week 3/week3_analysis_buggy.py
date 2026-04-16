@@ -26,10 +26,14 @@ for role, count in sorted(role_counts.items()):
 
 # Calculate the average years of experience
 total_experience = 0
+valid_count = 0
 for row in rows:
-    total_experience += int(row["experience_years"])
-
-avg_experience = total_experience / len(rows)
+    try:
+        total_experience += int(row["experience_years"])
+        valid_count += 1
+    except ValueError:
+        pass
+avg_experience = total_experience / valid_count
 print(f"\nAverage years of experience: {avg_experience:.1f}")
 
 # Find the top 5 highest satisfaction scores
@@ -40,6 +44,7 @@ for row in rows:
 
 scored_rows.sort(key=lambda x: x[1])
 top5 = scored_rows[:5]
+
 
 print("\nTop 5 satisfaction scores:")
 for name, score in top5:
