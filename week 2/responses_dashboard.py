@@ -5,19 +5,20 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 
+# The dashboard code for the responses dashboard.
 
 st.set_page_config(page_title="Responses Dashboard", layout="wide")
 st.title("Responses Dashboard")
 st.caption("Interactive dashboard for `demo_responses.csv`.")
 
-
+# Load the data from the CSV file.
 @st.cache_data
 def load_data(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["word_count"] = df["response"].fillna("").str.split().str.len()
     return df
 
-
+# Tokenize the text.
 def tokenize(text_series: pd.Series) -> list[str]:
     stop_words = {
         "the",
@@ -70,7 +71,7 @@ def tokenize(text_series: pd.Series) -> list[str]:
         tokens.extend([w for w in words if len(w) > 2 and w not in stop_words])
     return tokens
 
-
+# Load the data and display the filters.
 data_path = "demo_responses.csv"
 df = load_data(data_path)
 
@@ -93,6 +94,7 @@ if search_text.strip():
         filtered["response"].str.contains(search_text, case=False, na=False)
     ]
 
+# Display the metrics.
 col1, col2, col3 = st.columns(3)
 col1.metric("Responses", len(filtered))
 col2.metric("Avg words", f"{filtered['word_count'].mean():.1f}" if len(filtered) else "0.0")
@@ -130,6 +132,7 @@ if len(filtered):
     )
     st.altair_chart(length_chart, use_container_width=True)
 
+# Display the top terms.
 st.subheader("Top Terms")
 tokens = tokenize(filtered["response"])
 if tokens:
