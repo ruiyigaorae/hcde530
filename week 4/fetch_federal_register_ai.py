@@ -6,13 +6,13 @@ from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-
+# define the API URL and the output file name
 API_URL = "https://www.federalregister.gov/api/v1/documents.json"
 OUTPUT_FILE = "week4_federal_register.csv"
 MIN_RECORDS = 50
 PER_PAGE = 20
 
-
+# fetch a single page of documents from the API
 def fetch_page(page: int) -> dict:
     """
     The endpoint returns JSON with metadata (like total count and pages)
@@ -40,13 +40,15 @@ def fetch_page(page: int) -> dict:
         with urlopen(url, context=insecure_context) as response:
             return json.loads(response.read().decode("utf-8"))
 
-
+# main function to fetch the documents and save them to a CSV file
 def main() -> None:
     rows: list[dict] = []
     type_counts: Counter[str] = Counter()
     page = 1
     api_total_count: int | None = None
 
+# Keep fetching pages until we have at least 50 records,
+# because the API only returns 20 documents per page
     while len(rows) < MIN_RECORDS:
         payload = fetch_page(page)
         if api_total_count is None:
@@ -68,6 +70,7 @@ def main() -> None:
             # type: document class (for example RULE, PROPOSED RULE, NOTICE).
             doc_type = doc.get("type", "UNKNOWN")
 
+# Join multiple agency names into one string so it fits cleanly in a CSV cell
             if isinstance(agency_names, list):
                 agency_names_text = "; ".join(agency_names)
             else:
@@ -86,6 +89,7 @@ def main() -> None:
 
         page += 1
 
+# save the documents to a CSV file
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(
             csvfile,
@@ -108,6 +112,6 @@ def main() -> None:
     for doc_type, count in sorted(type_counts.items()):
         print(f"- {doc_type}: {count}")
 
-
+# run the main function
 if __name__ == "__main__":
     main()

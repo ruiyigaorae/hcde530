@@ -6,7 +6,6 @@ errors based on error messages. When a script fails silently or crashes, being
 able to trace the error to its source is essential for producing reliable
 analysis — a script that runs but produces wrong results is worse than one
 that crashes, because the error is invisible.
-
 I diagnosed and fixed three bugs in week3_analysis_buggy.py: a ValueError
 caused by a text value ("fifteen") in the experience_years field, which I
 fixed by wrapping the conversion in a try/except block and tracking only valid
@@ -22,7 +21,6 @@ the same category entered as "ux designer", "UX DESIGNER", and "Ux Designer"
 will be counted as three separate groups, which distorts any frequency
 analysis. Cleaning is not optional; it determines whether the results are
 meaningful.
-
 My script standardizes capitalization in the role, department, and
 primary_tool columns using .strip().title(), removing extra whitespace and
 making comparisons consistent. The cleaned data is saved to
