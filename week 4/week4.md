@@ -3,9 +3,8 @@
 **C4 - APIs and data acquisition**
 I can call a real public API, parse the JSON response, and save structured
 data to a CSV file for further analysis. Knowing how to pull data directly
-from a source — rather than relying on pre-packaged datasets — is essential
-for HCD research, where the questions often emerge before the data exists in
-a convenient form.
+from a source is essential for HCD research, where the questions often 
+emerge before the data exists in a convenient form.
 
 I chose the Federal Register API because it provides direct access to U.S.
 federal government documents, including rules, notices, and presidential
